@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="lanes">3</integer>
+    <integer name="lives">3</integer>
+    <integer name="interval">1000</integer>
+    <integer name="separator_size">8</integer>
+</resources>
