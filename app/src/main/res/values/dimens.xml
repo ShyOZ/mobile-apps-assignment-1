@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="separator_size">8dp</dimen>
+    <dimen name="height_to_reduce">150dp</dimen>
+    <dimen name="width_to_reduce">20dp</dimen>
 
 </resources>

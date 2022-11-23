@@ -1,16 +1,17 @@
 package com.mobileapps.assignment1.presentation;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
-
-import android.annotation.SuppressLint;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Vibrator;
+import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.res.ResourcesCompat;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
@@ -22,6 +23,8 @@ import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import es.dmoral.toasty.Toasty;
 
 public class GameActivity extends AppCompatActivity {
     GameManager gameManager;
@@ -48,6 +51,7 @@ public class GameActivity extends AppCompatActivity {
     private MediaPlayer collisionSound;
     private Toast collisionToast;
     private Vibrator vibrator;
+    private Timer timer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,10 +59,11 @@ public class GameActivity extends AppCompatActivity {
         setContentView(R.layout.activity_game);
 
         collisionSound = MediaPlayer.create(this, R.raw.nelson_ha_ha);
-        collisionToast = Toast.makeText(this, "Ha Ha!", Toast.LENGTH_SHORT);
-        ShapeableImageView toastImage = new ShapeableImageView(this);
-        Glide.with(this).load(R.drawable.nelson).into(toastImage);
-        collisionToast.setView(toastImage);
+        collisionToast = Toasty.normal(
+                this,
+                "Ha Ha!",
+                ResourcesCompat.getDrawable(getResources(), R.drawable.img_nelson, getTheme()));
+
         vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 
         int interval = getResources().getInteger(R.integer.interval);
@@ -67,11 +72,7 @@ public class GameActivity extends AppCompatActivity {
         for (int i = 0; i < lanes; i++) {
             obstacles.add(new ArrayList<>());
         }
-        int obstacles_per_lane = lanes * 4; // 4 obstacles per lane per lane, fits for now
-
         gameInitializer = new GameFieldInitializer(this);
-
-        gameManager = new GameManager(lives, lanes, getResources().getInteger(R.integer.interval), obstacles_per_lane);
 
         findViews();
 
@@ -82,7 +83,16 @@ public class GameActivity extends AppCompatActivity {
                 .placeholder(R.drawable.ic_launcher_background)
                 .into(img_background);
 
+        gameInitializer = new GameFieldInitializer(this);
         gameInitializer.initGameField(game_area, lane_layouts, lanes, player_images, obstacles, collision_obstacles, lives_area, lives_images, lives);
+
+        Log.d("game status in activity", "obstacles per lane: " + gameInitializer.getObstaclesPerLane());
+
+        gameManager = new GameManager(
+                lives,
+                lanes,
+                getResources().getInteger(R.integer.ticks_per_obstacle),
+                gameInitializer.getObstaclesPerLane());
 
         up_button.setOnClickListener(v -> movePlayer(-1));
 
@@ -91,8 +101,26 @@ public class GameActivity extends AppCompatActivity {
         startTimer(interval);
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        timer.cancel();
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        startTimer(getResources().getInteger(R.integer.interval));
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        timer.cancel();
+    }
+
     private void startTimer(int interval) {
-        Timer timer = new Timer(true);
+        timer = new Timer(true);
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
@@ -113,7 +141,7 @@ public class GameActivity extends AppCompatActivity {
 
     private void updateUI() {
         setPlayerAndObstaclesVisibilityAs(View.INVISIBLE);
-        if(gameManager.updateGame(vibrator, collisionSound, collisionToast))
+        if (gameManager.updateGame(vibrator, collisionSound, collisionToast))
             collision_obstacles.get(gameManager.getPlayerLocation()).setVisibility(View.INVISIBLE);
         refreshUI();
 
@@ -126,11 +154,11 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private void updateLives() {
-        if (gameManager.getLives() == 0) {
-            findViewById(R.id.game_over).setVisibility(View.VISIBLE);
-        } else if (gameManager.getLives() < lives_images.size()) {
+        if (gameManager.getLives() < lives_images.size())
             lives_images.get(gameManager.getLives()).setVisibility(View.INVISIBLE);
-        }
+
+        if (gameManager.getLives() == 0)
+            findViewById(R.id.game_over).setVisibility(View.VISIBLE);
     }
 
     private void setPlayerAndObstaclesVisibilityAs(int visibility) {
@@ -147,8 +175,8 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private void movePlayer(int direction) {
-        if((direction < 0 && gameManager.getPlayerLocation() == 0)
-        || (direction > 0 && gameManager.getPlayerLocation() == lane_layouts.size() - 1)) {
+        if ((direction < 0 && gameManager.getPlayerLocation() == 0)
+                || (direction > 0 && gameManager.getPlayerLocation() == lane_layouts.size() - 1)) {
             return;
         }
         player_images.get(gameManager.getPlayerLocation()).setVisibility(View.INVISIBLE);
@@ -157,6 +185,6 @@ public class GameActivity extends AppCompatActivity {
 
         if (gameManager.checkCollision(vibrator, collisionSound, collisionToast))
             collision_obstacles.get(gameManager.getPlayerLocation()).setVisibility(View.INVISIBLE);
-            refreshUI();
+        refreshUI();
     }
 }

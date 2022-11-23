@@ -3,6 +3,7 @@ package com.mobileapps.assignment1.presentation;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 
@@ -16,12 +17,15 @@ import java.util.ArrayList;
 
 public class GameFieldInitializer {
 
-    Context context;
-    Resources resources;
+    private final Context context;
+    private final Resources resources;
 
-    int separator_size;
-    float player_image_ratio;
-    float player_life_ratio;
+    private final int separator_size;
+
+    private int  obstacles_per_lane;
+
+    private final float player_image_ratio;
+    private final float player_life_ratio;
 
     public GameFieldInitializer(Context context) {
         this.context = context;
@@ -162,7 +166,7 @@ public class GameFieldInitializer {
         ShapeableImageView obstacleSIV = new ShapeableImageView(context);
         Glide
                 .with(context)
-                .load(R.drawable.img_obstacle_donut)
+                .load(R.drawable.img_obstacle_duff)
                 .into(obstacleSIV);
 
         ConstraintLayout.LayoutParams layoutParams = new ConstraintLayout.LayoutParams(
@@ -176,20 +180,13 @@ public class GameFieldInitializer {
 
     private void createObstacles(ArrayList<ConstraintLayout> lane_layouts, ArrayList<ArrayList<ShapeableImageView>> obstacles, ArrayList<ShapeableImageView> collision_obstacles ) {
 //        // measuring how many obstacles fit on the screen
-//        int screen_width = resources.getDisplayMetrics().widthPixels;
-//        ConstraintLayout lane0 = lane_layouts.get(0);
-//        View player = lane0.getChildAt(0);
-//        ShapeableImageView obstacle = createObstacle();
-//        obstacle.setId(View.generateViewId());
-//        lane0.addView(obstacle);
-//        ConstraintLayout.LayoutParams layoutParams = (ConstraintLayout.LayoutParams) obstacle.getLayoutParams();
-//        layoutParams.topToTop = lane0.getId();
-//        layoutParams.bottomToBottom = lane0.getId();
-//        layoutParams.startToEnd = player.getId();
-//        obstacle.measure(ConstraintLayout.LayoutParams.MATCH_CONSTRAINT, ViewGroup.LayoutParams.MATCH_PARENT);
-//        int obstaclesPerLane = screen_width/obstacle.getMeasuredHeight();
-//        lane0.removeView(obstacle);
-        int obstaclesPerLane = 4*lane_layouts.size();
+        int screen_width = resources.getDisplayMetrics().widthPixels;
+        int screen_height = resources.getDisplayMetrics().heightPixels;
+        int lane_width = (int)(screen_width-context.getResources().getDimension(R.dimen.width_to_reduce));
+        int lane_height = (int) ((screen_height - context.getResources().getDimension(R.dimen.height_to_reduce) - (lane_layouts.size()-1)*separator_size) / lane_layouts.size());
+        obstacles_per_lane = lane_width / lane_height;
+        Log.d("game status", "lane_width "+ lane_width + " lane_height "+ lane_height + " obstacles_per_lane "+ obstacles_per_lane);
+
         ShapeableImageView obstacle;
         ConstraintLayout.LayoutParams layoutParams;
 
@@ -207,7 +204,7 @@ public class GameFieldInitializer {
             layoutParams.bottomToBottom = lane.getId();
             layoutParams.endToEnd = lane.getChildAt(0).getId();
 
-            for (int j = 1; j <= obstaclesPerLane; j++) {
+            for (int j = 1; j <= obstacles_per_lane; j++) {
                 obstacle = createObstacle();
                 obstacle.setId(View.generateViewId());
                 obstacle.setRotation(90 * j);
@@ -233,5 +230,11 @@ public class GameFieldInitializer {
         createLives(lives_area, player_lives, lives);
 
         createObstacles(lane_layouts, obstacles, collision_obstacles);
+
+        Log.d("game status in initializer", "obstacles per lane: " + getObstaclesPerLane());
+    }
+
+    public int getObstaclesPerLane() {
+        return obstacles_per_lane;
     }
 }
