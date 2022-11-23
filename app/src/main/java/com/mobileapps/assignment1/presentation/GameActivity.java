@@ -3,45 +3,75 @@ package com.mobileapps.assignment1.presentation;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
-import android.graphics.Rect;
+import android.annotation.SuppressLint;
+import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.mobileapps.assignment1.R;
+import com.mobileapps.assignment1.logic.GameManager;
 
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Timer;
+import java.util.TimerTask;
 
 public class GameActivity extends AppCompatActivity {
+    GameManager gameManager;
+
     private ExtendedFloatingActionButton up_button;
     private ExtendedFloatingActionButton down_button;
+
     private ShapeableImageView img_background;
+
     private LinearLayout game_area;
-    private ArrayList<ConstraintLayout> lane_layouts;
-    private ArrayList<ShapeableImageView> player_images;
+    private final ArrayList<ConstraintLayout> lane_layouts = new ArrayList<>();
+    private final ArrayList<ShapeableImageView> player_images = new ArrayList<>();
+
+    private final ArrayList<ArrayList<ShapeableImageView>> obstacles = new ArrayList<>();
+    private final ArrayList<ShapeableImageView> collision_obstacles = new ArrayList<>();
+
+    private TextView game_score;
 
     private ConstraintLayout lives_area;
-    private ArrayList<ShapeableImageView> player_lives;
+    private final ArrayList<ShapeableImageView> lives_images = new ArrayList<>();
 
-    GameHelper gameHelper;
+    GameFieldInitializer gameInitializer;
 
-    private Timer timer;
-    private final int lives = getResources().getInteger(R.integer.lives);
-    private final int lanes = getResources().getInteger(R.integer.lanes);
-    private int pos = lanes / 2;
-
-    private final int interval = getResources().getInteger(R.integer.interval);
+    private MediaPlayer collisionSound;
+    private Toast collisionToast;
+    private Vibrator vibrator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
 
-        gameHelper = new GameHelper(this);
+        collisionSound = MediaPlayer.create(this, R.raw.nelson_ha_ha);
+        collisionToast = Toast.makeText(this, "Ha Ha!", Toast.LENGTH_SHORT);
+        ShapeableImageView toastImage = new ShapeableImageView(this);
+        Glide.with(this).load(R.drawable.nelson).into(toastImage);
+        collisionToast.setView(toastImage);
+        vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+
+        int interval = getResources().getInteger(R.integer.interval);
+        int lives = getResources().getInteger(R.integer.lives);
+        int lanes = getResources().getInteger(R.integer.lanes);
+        for (int i = 0; i < lanes; i++) {
+            obstacles.add(new ArrayList<>());
+        }
+        int obstacles_per_lane = lanes * 4; // 4 obstacles per lane per lane, fits for now
+
+        gameInitializer = new GameFieldInitializer(this);
+
+        gameManager = new GameManager(lives, lanes, getResources().getInteger(R.integer.interval), obstacles_per_lane);
 
         findViews();
 
@@ -52,13 +82,24 @@ public class GameActivity extends AppCompatActivity {
                 .placeholder(R.drawable.ic_launcher_background)
                 .into(img_background);
 
-        gameHelper.initGameField(game_area,lane_layouts,lanes, player_images, lives_area, player_lives, lives);
+        gameInitializer.initGameField(game_area, lane_layouts, lanes, player_images, obstacles, collision_obstacles, lives_area, lives_images, lives);
 
-        //TODO
-        up_button.setOnClickListener(v -> {});
+        up_button.setOnClickListener(v -> movePlayer(-1));
 
-        //TODO
-        down_button.setOnClickListener(v -> {});
+        down_button.setOnClickListener(v -> movePlayer(1));
+
+        startTimer(interval);
+    }
+
+    private void startTimer(int interval) {
+        Timer timer = new Timer(true);
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                runOnUiThread(() -> updateUI());
+            }
+        }, 0, interval);
+
     }
 
     private void findViews() {
@@ -66,30 +107,56 @@ public class GameActivity extends AppCompatActivity {
         down_button = findViewById(R.id.game_down_button);
         img_background = findViewById(R.id.game_img_background);
         game_area = findViewById(R.id.game_area);
-
-        lane_layouts = new ArrayList<>();
-        player_images = new ArrayList<>();
-        player_lives = new ArrayList<>();
+        lives_area = findViewById(R.id.game_lives_area);
+        game_score = findViewById(R.id.game_score);
     }
 
-    //TODO: delete, probably irrelevant
-    private boolean checkViewIntersection(View v1, View v2) {
-        int[] v1_pos = new int[2];
-        int[] v2_pos = new int[2];
-        v1.getLocationOnScreen(v1_pos);
-        v2.getLocationOnScreen(v2_pos);
-        Rect rect_v1 = new Rect(v1_pos[0], v1_pos[1], v1_pos[0] + v1.getMeasuredWidth(), v1_pos[0] + v1.getMeasuredHeight());
-        Rect rect_v2 = new Rect(v2_pos[0], v2_pos[1], v2_pos[0] + v2.getMeasuredWidth(), v2_pos[0] + v2.getMeasuredWidth());
-        return rect_v1.intersect(rect_v2);
-    }
-
-    //TODO
-    private void updateUI(){
+    private void updateUI() {
+        setPlayerAndObstaclesVisibilityAs(View.INVISIBLE);
+        if(gameManager.updateGame(vibrator, collisionSound, collisionToast))
+            collision_obstacles.get(gameManager.getPlayerLocation()).setVisibility(View.INVISIBLE);
+        refreshUI();
 
     }
 
-    //TODO
-    private void clicked(int dir){
+    private void refreshUI() {
+        setPlayerAndObstaclesVisibilityAs(View.VISIBLE);
+        updateLives();
+        game_score.setText(String.format(Locale.US, "%03d", gameManager.getScore()));
+    }
 
+    private void updateLives() {
+        if (gameManager.getLives() == 0) {
+            findViewById(R.id.game_over).setVisibility(View.VISIBLE);
+        } else if (gameManager.getLives() < lives_images.size()) {
+            lives_images.get(gameManager.getLives()).setVisibility(View.INVISIBLE);
+        }
+    }
+
+    private void setPlayerAndObstaclesVisibilityAs(int visibility) {
+        gameManager.getActiveObstacles().forEach(
+                obstacle_location ->
+                        obstacles
+                                .get(obstacle_location.getLane())
+                                .get(obstacle_location.getDistance())
+                                .setVisibility(visibility));
+
+        player_images
+                .get(gameManager.getPlayerLocation())
+                .setVisibility(visibility);
+    }
+
+    private void movePlayer(int direction) {
+        if((direction < 0 && gameManager.getPlayerLocation() == 0)
+        || (direction > 0 && gameManager.getPlayerLocation() == lane_layouts.size() - 1)) {
+            return;
+        }
+        player_images.get(gameManager.getPlayerLocation()).setVisibility(View.INVISIBLE);
+        gameManager.movePlayer(direction);
+        player_images.get(gameManager.getPlayerLocation()).setVisibility(View.VISIBLE);
+
+        if (gameManager.checkCollision(vibrator, collisionSound, collisionToast))
+            collision_obstacles.get(gameManager.getPlayerLocation()).setVisibility(View.INVISIBLE);
+            refreshUI();
     }
 }

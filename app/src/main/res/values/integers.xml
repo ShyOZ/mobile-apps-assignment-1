@@ -4,4 +4,6 @@
     <integer name="lives">3</integer>
     <integer name="interval">1000</integer>
     <integer name="separator_size">8</integer>
+    <integer name="ticks_per_obstacle">5</integer>
+
 </resources>

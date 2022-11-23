@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">assignment 1</string>
+    <string name="initial_score">000</string>
     <string name="background_image_url">https://images.foxtv.com/static.fox5ny.com/www.fox5ny.com/content/uploads/2020/04/932/524/ANIDOM_Simpsons_Backplate_02.png</string>
-    <string name="player_lost_description">D\'oh! You lost! But keep going!</string>
+    <string name="game_over">D\'oh! You lost! But keep going!</string>
 </resources>
