@@ -3,7 +3,6 @@
     <integer name="lanes">3</integer>
     <integer name="lives">3</integer>
     <integer name="interval">500</integer>
-    <integer name="separator_size">8</integer>
     <integer name="ticks_per_obstacle">3</integer>
 
 </resources>

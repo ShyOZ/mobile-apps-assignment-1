@@ -22,7 +22,7 @@ public class GameFieldInitializer {
 
     private final int separator_size;
 
-    private int  obstacles_per_lane;
+    private int obstacles_per_lane;
 
     private final float player_image_ratio;
     private final float player_life_ratio;
@@ -178,19 +178,18 @@ public class GameFieldInitializer {
         return obstacleSIV;
     }
 
-    private void createObstacles(ArrayList<ConstraintLayout> lane_layouts, ArrayList<ArrayList<ShapeableImageView>> obstacles, ArrayList<ShapeableImageView> collision_obstacles ) {
+    private void createObstacles(ArrayList<ConstraintLayout> lane_layouts, ArrayList<ArrayList<ShapeableImageView>> obstacles, ArrayList<ShapeableImageView> collision_obstacles) {
 //        // measuring how many obstacles fit on the screen
         int screen_width = resources.getDisplayMetrics().widthPixels;
         int screen_height = resources.getDisplayMetrics().heightPixels;
-        int lane_width = (int)(screen_width-context.getResources().getDimension(R.dimen.width_to_reduce));
-        int lane_height = (int) ((screen_height - context.getResources().getDimension(R.dimen.height_to_reduce) - (lane_layouts.size()-1)*separator_size) / lane_layouts.size());
+        int lane_width = (int) (screen_width - context.getResources().getDimension(R.dimen.width_to_reduce));
+        int lane_height = (int) ((screen_height - context.getResources().getDimension(R.dimen.height_to_reduce) - (lane_layouts.size() - 1) * separator_size) / lane_layouts.size());
         obstacles_per_lane = lane_width / lane_height;
-        Log.d("game status", "lane_width "+ lane_width + " lane_height "+ lane_height + " obstacles_per_lane "+ obstacles_per_lane);
 
         ShapeableImageView obstacle;
         ConstraintLayout.LayoutParams layoutParams;
 
-        for (int i = 0; i<lane_layouts.size(); i++) {
+        for (int i = 0; i < lane_layouts.size(); i++) {
             ConstraintLayout lane = lane_layouts.get(i);
             obstacle = createObstacle();
             obstacle.setId(View.generateViewId());
@@ -225,7 +224,7 @@ public class GameFieldInitializer {
         createLanes(game_area, lane_layouts, lanes);
 
         createPlayers(lane_layouts, player_images, lanes);
-        player_images.get(lanes/2).setVisibility(View.VISIBLE);
+        player_images.get(lanes / 2).setVisibility(View.VISIBLE);
 
         createLives(lives_area, player_lives, lives);
 

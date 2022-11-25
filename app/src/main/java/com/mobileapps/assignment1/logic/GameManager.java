@@ -1,7 +1,6 @@
 package com.mobileapps.assignment1.logic;
 
 import android.media.MediaPlayer;
-import android.os.Build;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.util.Log;
@@ -34,7 +33,6 @@ public class GameManager {
         this.player_location = lanes / 2;
         this.ticks_per_obstacle = ticks_per_obstacle;
         this.obstacle_starting_distance = obstacle_starting_distance;
-        Log.d("game status", "dist: " + obstacle_starting_distance);
     }
 
     public void movePlayer(int direction) {
@@ -49,14 +47,15 @@ public class GameManager {
         active_obstacles.add(obstacle);
     }
 
-    public boolean checkCollision(Vibrator vibrator, MediaPlayer collisionSound, Toast collisionToast) {
+    public boolean checkCollision(Vibrator vibrator, MediaPlayer collision_sound, Toast collision_toast) {
         for (Obstacle obstacle : active_obstacles) {
             if (obstacle.isColliding(player_location)) {
-                removeLife();
+                if (lives > 0)
+                    lives--;
                 active_obstacles.remove(obstacle);
                 vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE));
-                collisionSound.start();
-                collisionToast.show();
+                collision_sound.start();
+                collision_toast.show();
                 return true;
             }
         }
@@ -64,7 +63,7 @@ public class GameManager {
         return false;
     }
 
-    public boolean updateGame(Vibrator vibrator, MediaPlayer collisionSound, Toast collisionToast) {
+    public boolean updateGame(Vibrator vibrator, MediaPlayer collision_sound, Toast collision_toast) {
         if (lives > 0)
             score++;
         ticks++;
@@ -78,13 +77,11 @@ public class GameManager {
         for (Iterator<Obstacle> iterator = active_obstacles.iterator(); iterator.hasNext(); ) {
             Obstacle obstacle = iterator.next();
             obstacle.move();
-            if (obstacle.isOffScreen()) {
+            if (obstacle.isOffScreen())
                 iterator.remove();
-                Log.d("game status", "obstacle removed");
-            }
         }
 
-        return checkCollision(vibrator, collisionSound, collisionToast);
+        return checkCollision(vibrator, collision_sound, collision_toast);
     }
 
     public int getScore() {
@@ -102,9 +99,4 @@ public class GameManager {
     public ArrayList<Obstacle> getActiveObstacles() {
         return active_obstacles;
     }
-
-    public void removeLife() {
-        lives = lives > 0 ? lives - 1 : 0;
-    }
-
 }

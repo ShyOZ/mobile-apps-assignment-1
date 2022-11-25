@@ -3,7 +3,6 @@ package com.mobileapps.assignment1.presentation;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Vibrator;
-import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -27,7 +26,9 @@ import java.util.TimerTask;
 import es.dmoral.toasty.Toasty;
 
 public class GameActivity extends AppCompatActivity {
-    GameManager gameManager;
+    private GameManager game_manager;
+
+    private ExtendedFloatingActionButton start_button;
 
     private ExtendedFloatingActionButton up_button;
     private ExtendedFloatingActionButton down_button;
@@ -46,10 +47,8 @@ public class GameActivity extends AppCompatActivity {
     private ConstraintLayout lives_area;
     private final ArrayList<ShapeableImageView> lives_images = new ArrayList<>();
 
-    GameFieldInitializer gameInitializer;
-
-    private MediaPlayer collisionSound;
-    private Toast collisionToast;
+    private MediaPlayer collision_sound;
+    private Toast collision_toast;
     private Vibrator vibrator;
     private Timer timer;
 
@@ -58,11 +57,12 @@ public class GameActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
 
-        collisionSound = MediaPlayer.create(this, R.raw.nelson_ha_ha);
-        collisionToast = Toasty.normal(
+        collision_sound = MediaPlayer.create(this, R.raw.nelson_ha_ha);
+
+        collision_toast = Toasty.normal(
                 this,
                 "Ha Ha!",
-                ResourcesCompat.getDrawable(getResources(), R.drawable.img_nelson, getTheme()));
+                ResourcesCompat.getDrawable(getResources(), R.drawable.vec_nelson, getTheme()));
 
         vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 
@@ -72,7 +72,6 @@ public class GameActivity extends AppCompatActivity {
         for (int i = 0; i < lanes; i++) {
             obstacles.add(new ArrayList<>());
         }
-        gameInitializer = new GameFieldInitializer(this);
 
         findViews();
 
@@ -83,22 +82,24 @@ public class GameActivity extends AppCompatActivity {
                 .placeholder(R.drawable.ic_launcher_background)
                 .into(img_background);
 
-        gameInitializer = new GameFieldInitializer(this);
-        gameInitializer.initGameField(game_area, lane_layouts, lanes, player_images, obstacles, collision_obstacles, lives_area, lives_images, lives);
+        GameFieldInitializer game_initializer = new GameFieldInitializer(this);
+        game_initializer.initGameField(game_area, lane_layouts, lanes, player_images, obstacles, collision_obstacles, lives_area, lives_images, lives);
 
-        Log.d("game status in activity", "obstacles per lane: " + gameInitializer.getObstaclesPerLane());
 
-        gameManager = new GameManager(
+        game_manager = new GameManager(
                 lives,
                 lanes,
                 getResources().getInteger(R.integer.ticks_per_obstacle),
-                gameInitializer.getObstaclesPerLane());
+                game_initializer.getObstaclesPerLane());
 
         up_button.setOnClickListener(v -> movePlayer(-1));
 
         down_button.setOnClickListener(v -> movePlayer(1));
 
-        startTimer(interval);
+        start_button.setOnClickListener(v -> {
+            v.setVisibility(View.GONE);
+            startTimer(interval);
+        });
     }
 
     @Override
@@ -131,6 +132,7 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private void findViews() {
+        start_button = findViewById(R.id.game_start_button);
         up_button = findViewById(R.id.game_up_button);
         down_button = findViewById(R.id.game_down_button);
         img_background = findViewById(R.id.game_img_background);
@@ -141,8 +143,8 @@ public class GameActivity extends AppCompatActivity {
 
     private void updateUI() {
         setPlayerAndObstaclesVisibilityAs(View.INVISIBLE);
-        if (gameManager.updateGame(vibrator, collisionSound, collisionToast))
-            collision_obstacles.get(gameManager.getPlayerLocation()).setVisibility(View.INVISIBLE);
+        if (game_manager.updateGame(vibrator, collision_sound, collision_toast))
+            collision_obstacles.get(game_manager.getPlayerLocation()).setVisibility(View.INVISIBLE);
         refreshUI();
 
     }
@@ -150,19 +152,19 @@ public class GameActivity extends AppCompatActivity {
     private void refreshUI() {
         setPlayerAndObstaclesVisibilityAs(View.VISIBLE);
         updateLives();
-        game_score.setText(String.format(Locale.US, "%03d", gameManager.getScore()));
+        game_score.setText(String.format(Locale.US, "%03d", game_manager.getScore()));
     }
 
     private void updateLives() {
-        if (gameManager.getLives() < lives_images.size())
-            lives_images.get(gameManager.getLives()).setVisibility(View.INVISIBLE);
+        if (game_manager.getLives() < lives_images.size())
+            lives_images.get(game_manager.getLives()).setVisibility(View.INVISIBLE);
 
-        if (gameManager.getLives() == 0)
+        if (game_manager.getLives() == 0)
             findViewById(R.id.game_over).setVisibility(View.VISIBLE);
     }
 
     private void setPlayerAndObstaclesVisibilityAs(int visibility) {
-        gameManager.getActiveObstacles().forEach(
+        game_manager.getActiveObstacles().forEach(
                 obstacle_location ->
                         obstacles
                                 .get(obstacle_location.getLane())
@@ -170,21 +172,21 @@ public class GameActivity extends AppCompatActivity {
                                 .setVisibility(visibility));
 
         player_images
-                .get(gameManager.getPlayerLocation())
+                .get(game_manager.getPlayerLocation())
                 .setVisibility(visibility);
     }
 
     private void movePlayer(int direction) {
-        if ((direction < 0 && gameManager.getPlayerLocation() == 0)
-                || (direction > 0 && gameManager.getPlayerLocation() == lane_layouts.size() - 1)) {
+        if ((direction < 0 && game_manager.getPlayerLocation() == 0)
+                || (direction > 0 && game_manager.getPlayerLocation() == lane_layouts.size() - 1)) {
             return;
         }
-        player_images.get(gameManager.getPlayerLocation()).setVisibility(View.INVISIBLE);
-        gameManager.movePlayer(direction);
-        player_images.get(gameManager.getPlayerLocation()).setVisibility(View.VISIBLE);
+        player_images.get(game_manager.getPlayerLocation()).setVisibility(View.INVISIBLE);
+        game_manager.movePlayer(direction);
+        player_images.get(game_manager.getPlayerLocation()).setVisibility(View.VISIBLE);
 
-        if (gameManager.checkCollision(vibrator, collisionSound, collisionToast))
-            collision_obstacles.get(gameManager.getPlayerLocation()).setVisibility(View.INVISIBLE);
+        if (game_manager.checkCollision(vibrator, collision_sound, collision_toast))
+            collision_obstacles.get(game_manager.getPlayerLocation()).setVisibility(View.INVISIBLE);
         refreshUI();
     }
 }
