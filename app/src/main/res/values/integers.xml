@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <integer name="lanes">3</integer>
+    <integer name="lanes">5</integer>
     <integer name="lives">3</integer>
-    <integer name="interval">500</integer>
-    <integer name="ticks_per_obstacle">3</integer>
-
+    <integer name="interval">200</integer>
+    <integer name="ticks_per_obstacle">4</integer>
+    <integer name="easySpawn">2</integer>
+    <integer name="mediumSpawn">3</integer>
+    <integer name="hardSpawn">4</integer>
 </resources>

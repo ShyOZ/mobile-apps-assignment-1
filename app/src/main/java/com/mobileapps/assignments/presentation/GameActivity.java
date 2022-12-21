@@ -1,4 +1,4 @@
-package com.mobileapps.assignment1.presentation;
+package com.mobileapps.assignments.presentation;
 
 import android.media.MediaPlayer;
 import android.os.Bundle;
@@ -15,8 +15,9 @@ import androidx.core.content.res.ResourcesCompat;
 import com.bumptech.glide.Glide;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.imageview.ShapeableImageView;
-import com.mobileapps.assignment1.R;
-import com.mobileapps.assignment1.logic.GameManager;
+import com.mobileapps.assignments.R;
+import com.mobileapps.assignments.data.ObstacleType;
+import com.mobileapps.assignments.logic.GameManager;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -41,6 +42,7 @@ public class GameActivity extends AppCompatActivity {
 
     private final ArrayList<ArrayList<ShapeableImageView>> obstacles = new ArrayList<>();
     private final ArrayList<ShapeableImageView> collision_obstacles = new ArrayList<>();
+    private final ArrayList<ArrayList<ObstacleType>> obstacleTypes = new ArrayList<>();
 
     private TextView game_score;
 
@@ -59,38 +61,25 @@ public class GameActivity extends AppCompatActivity {
 
         collision_sound = MediaPlayer.create(this, R.raw.nelson_ha_ha);
 
-        collision_toast = Toasty.normal(
-                this,
-                "Ha Ha!",
-                ResourcesCompat.getDrawable(getResources(), R.drawable.vec_nelson, getTheme()));
+        collision_toast = Toasty.normal(this, "Ha Ha!", ResourcesCompat.getDrawable(getResources(), R.drawable.vec_nelson, getTheme()));
 
         vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 
         int interval = getResources().getInteger(R.integer.interval);
         int lives = getResources().getInteger(R.integer.lives);
         int lanes = getResources().getInteger(R.integer.lanes);
-        for (int i = 0; i < lanes; i++) {
+        for (int i = 0; i < lanes; i++)
             obstacles.add(new ArrayList<>());
-        }
 
         findViews();
 
-        Glide
-                .with(this)
-                .load(getResources().getString(R.string.background_image_url))
-                .centerCrop()
-                .placeholder(R.drawable.ic_launcher_background)
-                .into(img_background);
+        Glide.with(this).load(getResources().getString(R.string.background_image_url)).centerCrop().placeholder(R.drawable.ic_launcher_background).into(img_background);
 
         GameFieldInitializer game_initializer = new GameFieldInitializer(this);
-        game_initializer.initGameField(game_area, lane_layouts, lanes, player_images, obstacles, collision_obstacles, lives_area, lives_images, lives);
+        game_initializer.initGameField(game_area, lane_layouts, lanes, player_images, obstacles, collision_obstacles, obstacleTypes, lives_area, lives_images, lives);
 
 
-        game_manager = new GameManager(
-                lives,
-                lanes,
-                getResources().getInteger(R.integer.ticks_per_obstacle),
-                game_initializer.getObstaclesPerLane());
+        game_manager = new GameManager(lives, lanes, getResources().getInteger(R.integer.ticks_per_obstacle), game_initializer.getObstaclesPerLane(), getResources().getInteger(R.integer.mediumSpawn));
 
         up_button.setOnClickListener(v -> movePlayer(-1));
 
@@ -159,26 +148,17 @@ public class GameActivity extends AppCompatActivity {
         if (game_manager.getLives() < lives_images.size())
             lives_images.get(game_manager.getLives()).setVisibility(View.INVISIBLE);
 
-        if (game_manager.getLives() == 0)
-            findViewById(R.id.game_over).setVisibility(View.VISIBLE);
+        if (game_manager.getLives() == 0) findViewById(R.id.game_over).setVisibility(View.VISIBLE);
     }
 
     private void setPlayerAndObstaclesVisibilityAs(int visibility) {
-        game_manager.getActiveObstacles().forEach(
-                obstacle_location ->
-                        obstacles
-                                .get(obstacle_location.getLane())
-                                .get(obstacle_location.getDistance())
-                                .setVisibility(visibility));
+        game_manager.getActiveObstacles().forEach(obstacle_location -> obstacles.get(obstacle_location.getLane()).get(obstacle_location.getDistance()).setVisibility(visibility));
 
-        player_images
-                .get(game_manager.getPlayerLocation())
-                .setVisibility(visibility);
+        player_images.get(game_manager.getPlayerLocation()).setVisibility(visibility);
     }
 
     private void movePlayer(int direction) {
-        if ((direction < 0 && game_manager.getPlayerLocation() == 0)
-                || (direction > 0 && game_manager.getPlayerLocation() == lane_layouts.size() - 1)) {
+        if ((direction < 0 && game_manager.getPlayerLocation() == 0) || (direction > 0 && game_manager.getPlayerLocation() == lane_layouts.size() - 1)) {
             return;
         }
         player_images.get(game_manager.getPlayerLocation()).setVisibility(View.INVISIBLE);

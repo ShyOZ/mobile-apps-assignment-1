@@ -1,4 +1,4 @@
-package com.mobileapps.assignment1.presentation;
+package com.mobileapps.assignments.presentation;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -11,7 +11,8 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.imageview.ShapeableImageView;
-import com.mobileapps.assignment1.R;
+import com.mobileapps.assignments.R;
+import com.mobileapps.assignments.data.ObstacleType;
 
 import java.util.ArrayList;
 
@@ -34,7 +35,7 @@ public class GameFieldInitializer {
         BitmapFactory.Options dimensions = new BitmapFactory.Options();
         dimensions.inJustDecodeBounds = true;
 
-        BitmapFactory.decodeResource(resources, R.drawable.img_bart_player, dimensions);
+        BitmapFactory.decodeResource(resources, R.drawable.vec_bart_player, dimensions);
         player_image_ratio = (float) dimensions.outWidth / dimensions.outHeight;
 
         BitmapFactory.decodeResource(resources, R.drawable.img_bart_life, dimensions);
@@ -88,7 +89,7 @@ public class GameFieldInitializer {
         ShapeableImageView playerSIV = new ShapeableImageView(context);
         Glide
                 .with(context)
-                .load(R.drawable.img_bart_player)
+                .load(R.drawable.vec_bart_player)
                 .into(playerSIV);
 
         ConstraintLayout.LayoutParams layoutParams = new ConstraintLayout.LayoutParams(
@@ -178,7 +179,7 @@ public class GameFieldInitializer {
         return obstacleSIV;
     }
 
-    private void createObstacles(ArrayList<ConstraintLayout> lane_layouts, ArrayList<ArrayList<ShapeableImageView>> obstacles, ArrayList<ShapeableImageView> collision_obstacles) {
+    private void createObstacles(ArrayList<ConstraintLayout> lane_layouts, ArrayList<ArrayList<ShapeableImageView>> obstacles, ArrayList<ShapeableImageView> collision_obstacles, ArrayList<ArrayList<ObstacleType>> obstacleTypes) {
 //        // measuring how many obstacles fit on the screen
         int screen_width = resources.getDisplayMetrics().widthPixels;
         int screen_height = resources.getDisplayMetrics().heightPixels;
@@ -196,6 +197,7 @@ public class GameFieldInitializer {
             obstacle.setVisibility(View.INVISIBLE);
             lane.addView(obstacle);
             obstacles.get(i).add(obstacle);
+            obstacleTypes.get(i).add(ObstacleType.DUFF);
             collision_obstacles.add(obstacle);
 
             layoutParams = (ConstraintLayout.LayoutParams) obstacle.getLayoutParams();
@@ -210,6 +212,7 @@ public class GameFieldInitializer {
                 obstacle.setVisibility(View.INVISIBLE);
                 lane.addView(obstacle);
                 obstacles.get(i).add(obstacle);
+                obstacleTypes.get(i).add(ObstacleType.DUFF);
 
                 layoutParams = (ConstraintLayout.LayoutParams) obstacle.getLayoutParams();
                 layoutParams.topToTop = lane.getId();
@@ -219,7 +222,22 @@ public class GameFieldInitializer {
         }
     }
 
-    public void initGameField(LinearLayout game_area, ArrayList<ConstraintLayout> lane_layouts, int lanes, ArrayList<ShapeableImageView> player_images, ArrayList<ArrayList<ShapeableImageView>> obstacles, ArrayList<ShapeableImageView> collision_obstacles, ConstraintLayout lives_area, ArrayList<ShapeableImageView> player_lives, int lives) {
+    public void initGameField(
+            LinearLayout game_area,
+            ArrayList<ConstraintLayout> lane_layouts,
+            int lanes,
+            ArrayList<ShapeableImageView> player_images,
+            ArrayList<ArrayList<ShapeableImageView>> obstacles,
+            ArrayList<ShapeableImageView> collision_obstacles,
+            ArrayList<ArrayList<ObstacleType>> obstacleTypes,
+            ConstraintLayout lives_area,
+            ArrayList<ShapeableImageView> player_lives,
+            int lives) {
+
+        for (int i = 0; i < lanes; i++) {
+            obstacles.add(new ArrayList<>());
+            obstacleTypes.add(new ArrayList<>());
+        }
 
         createLanes(game_area, lane_layouts, lanes);
 
@@ -228,7 +246,7 @@ public class GameFieldInitializer {
 
         createLives(lives_area, player_lives, lives);
 
-        createObstacles(lane_layouts, obstacles, collision_obstacles);
+        createObstacles(lane_layouts, obstacles, collision_obstacles, obstacleTypes);
 
         Log.d("game status in initializer", "obstacles per lane: " + getObstaclesPerLane());
     }

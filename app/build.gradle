@@ -1,13 +1,14 @@
 plugins {
     id 'com.android.application'
+    id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
 }
 
 android {
-    namespace 'com.mobileapps.assignment1'
+    namespace 'com.mobileapps.assignments'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.mobileapps.assignment1"
+        applicationId "com.mobileapps.assignments"
         minSdk 26
         targetSdk 33
         versionCode 1
@@ -46,4 +47,18 @@ dependencies {
     // Glide
     implementation 'com.github.bumptech.glide:glide:4.14.2'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.14.2'
+
+    // Gson
+    implementation 'com.google.code.gson:gson:2.8.7'
+
+    // Maps
+    implementation 'com.google.android.gms:play-services-maps:18.1.0'
+//    implementation 'com.google.android.gms:play-services-location:21.0.1'
+
+    // Navigation
+    implementation 'androidx.navigation:navigation-fragment:2.5.3'
+    implementation 'androidx.navigation:navigation-ui:2.5.3'
+
+    // Prefy
+    implementation 'com.github.paz-lavi:Prefy:1.0.4'
 }

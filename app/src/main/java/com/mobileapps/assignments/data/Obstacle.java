@@ -1,12 +1,12 @@
-package com.mobileapps.assignment1.data;
-
-import androidx.annotation.NonNull;
+package com.mobileapps.assignments.data;
 
 public class Obstacle {
-    int lane;
-    int distance;
+    private int lane = 0;
+    private int distance = -1;
+    private ObstacleType type = ObstacleType.DUFF;
 
-    public Obstacle(){}
+    public Obstacle() {
+    }
 
     public Obstacle setLane(int lane) {
         this.lane = lane;
@@ -18,12 +18,21 @@ public class Obstacle {
         return this;
     }
 
+    public Obstacle setType(ObstacleType type) {
+        this.type = type;
+        return this;
+    }
+
     public int getLane() {
         return lane;
     }
 
     public int getDistance() {
         return distance;
+    }
+
+    public ObstacleType getType() {
+        return type;
     }
 
     public void move() {
@@ -36,14 +45,5 @@ public class Obstacle {
 
     public boolean isOffScreen() {
         return distance < 0;
-    }
-
-    @NonNull
-    @Override
-    public String toString() {
-        return "Obstacle{" +
-                "lane=" + lane +
-                ", distance=" + distance +
-                '}';
     }
 }

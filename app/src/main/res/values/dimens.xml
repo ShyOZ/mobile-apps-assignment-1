@@ -3,5 +3,5 @@
     <dimen name="separator_size">8dp</dimen>
     <dimen name="height_to_reduce">150dp</dimen>
     <dimen name="width_to_reduce">20dp</dimen>
-
+    <dimen name="text_margin">16dp</dimen>
 </resources>

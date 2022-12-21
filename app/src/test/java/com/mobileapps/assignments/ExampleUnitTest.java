@@ -1,4 +1,4 @@
-package com.mobileapps.assignment1;
+package com.mobileapps.assignments;
 
 import org.junit.Test;
 
